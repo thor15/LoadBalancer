@@ -47,7 +47,7 @@ int main(int args, char** argv)
 	});
 
 	producer.join();
-	scalerthread.detach();
+	scalerthread.join();
 	loadbalancer.join();
 	statthread.detach();
 	

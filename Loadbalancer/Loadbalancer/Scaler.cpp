@@ -4,7 +4,10 @@ void Scaler::monitorServers()
 {
 	while (true)
 	{
+		
 		int numRequsts = requestQueue->size();
+		printf("Making check, num requests: %d, num servers: %d\n", numRequsts, *numServers);
+
 		if (requestDone->load())
 		{
 			break;

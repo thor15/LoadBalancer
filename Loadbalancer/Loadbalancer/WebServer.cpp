@@ -10,3 +10,8 @@ void WebServer::processRequest(Request request)
 	}
 	ctxServer->sem.release();
 }
+
+void WebServer::start()
+{
+
+}
