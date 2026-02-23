@@ -42,6 +42,16 @@ void GenerateRequest::continuouslyCreateRequests(int totalTime)
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         cTime += 1;
     }
+
+    Request newRequest = Request();
+    newRequest.requestIP = "-1";
+    newRequest.destinationIP = "-1";
+    {
+        std::unique_lock<std::shared_mutex> lock(ctx->rw);
+        requestQueue->push(newRequest);
+    }
+
+    requestDone->store(true);
 }
 
 void GenerateRequest::generateInitialRequests(int numServers)

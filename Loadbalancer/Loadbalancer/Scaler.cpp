@@ -5,6 +5,10 @@ void Scaler::monitorServers()
 	while (true)
 	{
 		int numRequsts = requestQueue->size();
+		if (requestDone->load())
+		{
+			break;
+		}
 
 		if (numRequsts > *numServers * 80)
 		{
@@ -17,6 +21,11 @@ void Scaler::monitorServers()
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(4000));
 	}
+	{
+		std::lock_guard<std::shared_mutex> lock(addRemove->rw);
+		scalerDone->store(true);
+	}
+	
 }
 
 void Scaler::addServer()

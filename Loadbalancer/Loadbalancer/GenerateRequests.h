@@ -12,8 +12,8 @@ enum RequestMode
 class GenerateRequest
 {
 public:
-	GenerateRequest(RequestMode rM, std::queue<Request>* rQ, std::shared_ptr<SyncContext> sctx) : requestMode(rM) { 
-		requestQueue = rQ; ctx = std::move(sctx);
+	GenerateRequest(RequestMode rM, std::queue<Request>* rQ, std::shared_ptr<SyncContext> sctx, std::shared_ptr<std::atomic<bool>> rD) : requestMode(rM) {
+		requestQueue = rQ; ctx = std::move(sctx); requestDone = std::move(rD);
 	};
 	std::string generateIP();
 	void continuouslyCreateRequests(int totalTime);
@@ -24,6 +24,7 @@ private:
 	RequestMode requestMode;
 	std::queue<Request>* requestQueue;
 	std::shared_ptr<SyncContext> ctx;
+	std::shared_ptr<std::atomic<bool>> requestDone;
 };
 
 

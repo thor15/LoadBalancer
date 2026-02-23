@@ -17,14 +17,17 @@ int main(int args, char** argv)
 	auto ctxServer = std::make_shared<SyncContext>();
 	auto addRemove = std::make_shared<SyncContext>();
 
+	auto requestDone = std::make_shared<std::atomic<bool>>();
+	auto scalerDone = std::make_shared < std::atomic<bool>>();
+
 	RequestMode mode = RequestMode::BURST;
-	GenerateRequest generator = GenerateRequest(mode, &requestQueue, ctxRequest);
-	LoadBalancer balancer = LoadBalancer(&requestQueue, &serverQueue, ctxRequest, ctxServer, addRemove);
-	Scaler scaler = Scaler(&requestQueue, &serverQueue, &numServers, ctxServer, addRemove);
+	GenerateRequest generator = GenerateRequest(mode, &requestQueue, ctxRequest, requestDone);
+	LoadBalancer balancer = LoadBalancer(&requestQueue, &serverQueue, ctxRequest, ctxServer, addRemove, scalerDone);
+	Scaler scaler = Scaler(&requestQueue, &serverQueue, &numServers, ctxServer, addRemove, requestDone, scalerDone);
 	Stats stats = Stats(&requestQueue, &numServers);
 	
 
-	balancer.startInitial(numServers);
+	balancer.startInitial(&numServers);
 	generator.generateInitialRequests(numServers);
 
 	std::thread producer([&] {
@@ -44,10 +47,10 @@ int main(int args, char** argv)
 	});
 
 	producer.join();
-
-	loadbalancer.detach();
-	statthread.detach();
 	scalerthread.detach();
+	loadbalancer.join();
+	statthread.detach();
+	
 	
 	return 0;
 }
