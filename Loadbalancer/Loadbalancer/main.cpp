@@ -9,6 +9,16 @@ int main(int args, char** argv)
 	}
 	int numServers = atoi(argv[1]);
 	int duration = atoi(argv[2]);
+	int mode = atoi(argv[3]);
+	RequestMode requestMode = RequestMode::SLOW;
+	if (mode == 0)
+	{
+		requestMode = RequestMode::BURST;
+	}
+	else if (mode == 1)
+	{
+		requestMode = RequestMode::NORMAL;
+	}
 
 	std::queue<Request>    requestQueue;
 	std::queue<WebServer*> serverQueue;
@@ -20,8 +30,8 @@ int main(int args, char** argv)
 	auto requestDone = std::make_shared<std::atomic<bool>>();
 	auto scalerDone = std::make_shared < std::atomic<bool>>();
 
-	RequestMode mode = RequestMode::BURST;
-	GenerateRequest generator = GenerateRequest(mode, &requestQueue, ctxRequest, requestDone);
+	
+	GenerateRequest generator = GenerateRequest(requestMode, &requestQueue, ctxRequest, requestDone);
 	LoadBalancer balancer = LoadBalancer(&requestQueue, &serverQueue, ctxRequest, ctxServer, addRemove, scalerDone);
 	Scaler scaler = Scaler(&requestQueue, &serverQueue, &numServers, ctxServer, addRemove, requestDone, scalerDone);
 	Stats stats = Stats(&requestQueue, &numServers);
@@ -47,8 +57,11 @@ int main(int args, char** argv)
 	});
 
 	producer.join();
+	printf("Merging with GenerateRequests\n");
 	scalerthread.join();
+	printf("Merging with Scaler\n");
 	loadbalancer.join();
+	printf("Merging with LoadBalancer\n");
 	statthread.detach();
 	
 	

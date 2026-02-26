@@ -2,6 +2,8 @@
 #ifndef GENERATEREQUESTS_H
 #include "pch.h"
 
+
+
 enum RequestMode
 {
 	BURST = 1,
@@ -16,15 +18,23 @@ public:
 		requestQueue = rQ; ctx = std::move(sctx); requestDone = std::move(rD);
 	};
 	std::string generateIP();
+	std::string generateRequestIP(std::mt19937& rng);
+	std::string generateDestinationIP(std::mt19937& rng);
 	void continuouslyCreateRequests(int totalTime);
 	void generateInitialRequests(int numServers);
 
 
 private:
+	int next_interarrival_ms(std::mt19937& rng);
 	RequestMode requestMode;
 	std::queue<Request>* requestQueue;
 	std::shared_ptr<SyncContext> ctx;
 	std::shared_ptr<std::atomic<bool>> requestDone;
+	int remainingInBurst = 0;
+	std::string DoSIP;
+	int remainingInDoS;
+	bool requestDoS;
+	bool destinationDoS;
 };
 
 

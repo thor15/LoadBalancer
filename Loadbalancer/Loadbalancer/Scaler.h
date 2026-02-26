@@ -18,6 +18,7 @@ private:
 	std::queue<Request>* requestQueue;
 	std::queue<WebServer*>* serverQueue;
 	int* numServers;
+	int cyclesBetween = 160;
 	std::shared_ptr<SyncContext> ctxServer;
 	std::shared_ptr<SyncContext> addRemove;
 	std::shared_ptr<std::atomic<bool>> requestDone;

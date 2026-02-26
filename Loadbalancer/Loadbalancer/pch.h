@@ -22,7 +22,7 @@
 #include "Stats.h"
 #include "Scaler.h"
 
-
+#define MILI_PER_CYCLE 20
 
 
 // add headers that you want to pre-compile here

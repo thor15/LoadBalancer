@@ -6,6 +6,6 @@ void Stats::printStats()
 	{
 		printf("Number of Servers: %d, Current Number of Requests: %lld\n", *numServers, requestQueue->size());
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
 }

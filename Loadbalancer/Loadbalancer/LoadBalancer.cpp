@@ -5,6 +5,7 @@ void LoadBalancer::startInitial(int* numServers)
 	for (int i = 0; i < *numServers; i++)
 	{
 		WebServer* server = new WebServer(serverQueue, ctxServer);
+		server->start();
 		serverQueue->push(server);
 	}
 	serverCount = numServers;
@@ -32,6 +33,7 @@ void LoadBalancer::processRequests()
 
 		if (request.requestIP == "-1" && request.destinationIP == "-1")
 		{
+			printf("All requests have been sent to processing\n");
 			break;
 		}
 
@@ -44,15 +46,15 @@ void LoadBalancer::processRequests()
 			server = serverQueue->front();
 			serverQueue->pop();
 		}
-
 		server->processRequest(request);
 	}
 	
 	std::unique_lock<std::shared_mutex> lock(addRemove->rw);
 	cv.wait(lock, [&] { return scalerDone->load(std::memory_order_acquire); });
-	
-	for (int i = 0; i < *serverCount; i++)
+	int iter = *serverCount;
+	for (int i = 0; i < iter; i++)
 	{
+		printf("Deleting a server on iteration: %d\n", i);
 		ctxServer->sem.acquire();
 		WebServer* server;
 		{
@@ -60,7 +62,8 @@ void LoadBalancer::processRequests()
 			server = serverQueue->front();
 			serverQueue->pop();
 		}
-
+		(*serverCount)--;
 		delete server;
 	}
+	printf("Done cleaning up!\n");
 }
