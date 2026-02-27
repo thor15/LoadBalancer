@@ -33,7 +33,7 @@ void LoadBalancer::processRequests()
 
 		if (request.requestIP == "-1" && request.destinationIP == "-1")
 		{
-			printf("All requests have been sent to processing\n");
+			printf(GREEN "All requests have been sent to processing\n" RESET);
 			break;
 		}
 
@@ -53,7 +53,7 @@ void LoadBalancer::processRequests()
 		}
 		else if (firstFind)
 		{
-			printf("Stopping a DoS Attack");
+			printf(RED "Stopping a DoS Attack" RESET "\n");
 		}
 	}
 	
@@ -62,7 +62,6 @@ void LoadBalancer::processRequests()
 	int iter = *serverCount;
 	for (int i = 0; i < iter; i++)
 	{
-		printf("Deleting a server on iteration: %d\n", i);
 		ctxServer->sem.acquire();
 		WebServer* server;
 		{
@@ -73,7 +72,7 @@ void LoadBalancer::processRequests()
 		(*serverCount)--;
 		delete server;
 	}
-	printf("Done cleaning up!\n");
+	printf(GREEN "Done cleaning up!\n" RESET);
 }
 
 int LoadBalancer::find(const std::array<HotEntry, K>& list, const std::string& ip)

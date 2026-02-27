@@ -15,13 +15,13 @@ void Scaler::monitorServers()
 
 		if (numRequsts > *numServers * 80)
 		{
-			printf("Adding Server\n");
+			printf(GREEN "Adding Server\n" RESET);
 			addServer();
 			cyclesSince = 0;
 		}
 		else if (numRequsts < *numServers * 50 && *numServers > 1)
 		{
-			printf("Removing Server\n");
+			printf(RED "Removing Server\n" GREEN);
 			removeServer();
 			cyclesSince = 0;
 		}

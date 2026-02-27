@@ -24,6 +24,9 @@
 #include "Scaler.h"
 
 #define MILI_PER_CYCLE 20
+#define GREEN  "\x1b[32m"
+#define RESET  "\x1b[0m"
+#define RED    "\x1b[31m"
 
 
 // add headers that you want to pre-compile here
