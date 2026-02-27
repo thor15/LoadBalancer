@@ -51,9 +51,9 @@ void LoadBalancer::processRequests()
 			}
 			server->processRequest(request);
 		}
-		else
+		else if (firstFind)
 		{
-
+			printf("Stopping a DoS Attack");
 		}
 	}
 	
@@ -116,6 +116,7 @@ void LoadBalancer::insertFront(std::array<HotEntry, K>& list, const std::string&
 
 bool LoadBalancer::allowByHotList(const std::string& ip, std::array<HotEntry, K>& list)
 {
+	firstFind = false;
 	for (auto& e : list) 
 	{
 		if (!e.inUse) continue;
@@ -143,6 +144,7 @@ bool LoadBalancer::allowByHotList(const std::string& ip, std::array<HotEntry, K>
 	{
 		list[0].blockedUntilSeq = reqSeq + blockLength;
 		list[0].score = 0;
+		firstFind = true;
 		return false;
 	}
 

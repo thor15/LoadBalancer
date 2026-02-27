@@ -47,6 +47,7 @@ private:
 	int blockThreshhold = 20;
 	int blockLength = 100;
 	uint64_t reqSeq = 0;
+	bool firstFind = false;
 };
 
 
