@@ -34,6 +34,7 @@ void LoadBalancer::processRequests()
 		if (request.requestIP == "-1" && request.destinationIP == "-1")
 		{
 			printf(GREEN "All requests have been sent to processing\n" RESET);
+			fprintf(logFile, "All requests have been sent to processing\n");
 			break;
 		}
 
@@ -54,6 +55,7 @@ void LoadBalancer::processRequests()
 		else if (firstFind)
 		{
 			printf(RED "Stopping a DoS Attack" RESET "\n");
+			fprintf(logFile, "Stopping a DoS Attack" "\n");
 		}
 	}
 	
@@ -73,6 +75,7 @@ void LoadBalancer::processRequests()
 		delete server;
 	}
 	printf(GREEN "Done cleaning up!\n" RESET);
+	fprintf(logFile, "Done cleaning up!\n");
 }
 
 int LoadBalancer::find(const std::array<HotEntry, K>& list, const std::string& ip)
@@ -118,9 +121,16 @@ bool LoadBalancer::allowByHotList(const std::string& ip, std::array<HotEntry, K>
 	firstFind = false;
 	for (auto& e : list) 
 	{
-		if (!e.inUse) continue;
+		if (!e.inUse)
+		{
+			continue;
+		}
+			
 		e.score -= decay;
-		if (e.score < 0) e.score = 0;
+		if (e.score < 0)
+		{
+			e.score = 0;
+		}
 	}
 
 	int idx = find(list, ip);

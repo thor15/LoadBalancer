@@ -7,8 +7,8 @@ class LoadBalancer
 {
 public:
 	LoadBalancer(std::queue<Request>* rQ, std::queue<WebServer*>* sQ, std::shared_ptr<SyncContext> sctx, std::shared_ptr<SyncContext> sctxS, std::shared_ptr<SyncContext> aR,
-		std::shared_ptr<std::atomic<bool>> sD) : serverCount(0) {
-		requestQueue = rQ; serverQueue = sQ; ctxRequest = std::move(sctx);	ctxServer = std::move(sctxS); addRemove = std::move(aR); scalerDone = std::move(sD);
+		std::shared_ptr<std::atomic<bool>> sD, FILE* logs) : serverCount(0) {
+		requestQueue = rQ; serverQueue = sQ; ctxRequest = std::move(sctx);	ctxServer = std::move(sctxS); addRemove = std::move(aR); scalerDone = std::move(sD); logFile = logs;
 	};
 	void startInitial(int* numServers);
 	void processRequests();
@@ -42,12 +42,13 @@ private:
 	std::shared_ptr<SyncContext> addRemove;
 	std::shared_ptr<std::atomic<bool>> scalerDone;
 	std::condition_variable_any cv;
-	int bump = 1;
+	int bump = 3;
 	int decay = 1;
 	int blockThreshhold = 20;
 	int blockLength = 100;
 	uint64_t reqSeq = 0;
 	bool firstFind = false;
+	FILE* logFile;
 };
 
 

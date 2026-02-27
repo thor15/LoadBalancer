@@ -27,8 +27,8 @@ int GenerateRequest::next_interarrival_ms(std::mt19937& rng)
         case RequestMode::NORMAL:
         default:
         {
-            constexpr int mean = 5;
-            std::normal_distribution<double> d(mean, 12.0);
+            constexpr int mean = 10;
+            std::normal_distribution<double> d(mean, 3.0);
             int ms = static_cast<int>(d(rng));
             return std::clamp(ms, 6, 15);
         }
@@ -54,13 +54,14 @@ std::string GenerateRequest::generateRequestIP(std::mt19937& rng)
         if (requestDoS)
         {
             remainingInDoS--;
-            requestDoS = remainingInBurst == 0;
+            requestDoS = remainingInBurst != 0;
             return DoSIP;
         }
 
         std::uniform_int_distribution<int> oneInHundred(1, 100);
         if (oneInHundred(rng) == 1)
         {
+            
             requestDoS = true;
             remainingInDoS = 100;
             DoSIP = generateIP();
@@ -78,7 +79,7 @@ std::string GenerateRequest::generateDestinationIP(std::mt19937& rng)
         if (destinationDoS)
         {
             remainingInDoS--;
-            destinationDoS = remainingInBurst == 0;
+            destinationDoS = remainingInDoS != 0;
             return DoSIP;
         }
 
@@ -101,8 +102,8 @@ void GenerateRequest::continuouslyCreateRequests(int totalTime)
     int cTime = 0;
     while (cTime < totalTime)
     {
-        std::string inIP = generateIP();
-        std::string outIP = generateIP();
+        std::string inIP = generateRequestIP(rng);
+        std::string outIP = generateDestinationIP(rng);
 
         Request newRequest = Request();
         newRequest.requestIP = inIP;
@@ -138,6 +139,7 @@ void GenerateRequest::continuouslyCreateRequests(int totalTime)
     ctx->sem.release();
     requestDone->store(true);
     printf("Requests Done!\n");
+    fprintf(logFile, "Requests Done!\n");
 }
 
 void GenerateRequest::generateInitialRequests(int numServers)

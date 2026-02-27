@@ -4,12 +4,20 @@ int main(int args, char** argv)
 {
 	if (args < 4)
 	{
-		printf("Too few arguments");
+		printf("Too few arguments\n");
 		return 1;
 	}
 	int numServers = atoi(argv[1]);
 	int duration = atoi(argv[2]);
 	int mode = atoi(argv[3]);
+	FILE* logFile;
+	errno_t err = fopen_s(&logFile, "../log.txt", "w");
+	if (err != 0)
+	{
+		printf("Failed to open log\n");
+		return 1;
+	}
+
 	RequestMode requestMode = RequestMode::SLOW;
 	if (mode == 0)
 	{
@@ -31,10 +39,10 @@ int main(int args, char** argv)
 	auto scalerDone = std::make_shared < std::atomic<bool>>();
 
 	
-	GenerateRequest generator = GenerateRequest(requestMode, &requestQueue, ctxRequest, requestDone);
-	LoadBalancer balancer = LoadBalancer(&requestQueue, &serverQueue, ctxRequest, ctxServer, addRemove, scalerDone);
-	Scaler scaler = Scaler(&requestQueue, &serverQueue, &numServers, ctxServer, addRemove, requestDone, scalerDone);
-	Stats stats = Stats(&requestQueue, &numServers);
+	GenerateRequest generator = GenerateRequest(requestMode, &requestQueue, ctxRequest, requestDone, logFile);
+	LoadBalancer balancer = LoadBalancer(&requestQueue, &serverQueue, ctxRequest, ctxServer, addRemove, scalerDone, logFile);
+	Scaler scaler = Scaler(&requestQueue, &serverQueue, &numServers, ctxServer, addRemove, requestDone, scalerDone, logFile);
+	Stats stats = Stats(&requestQueue, &numServers, logFile);
 	
 
 	balancer.startInitial(&numServers);
@@ -55,15 +63,19 @@ int main(int args, char** argv)
 	std::thread scalerthread([&] {
 		scaler.monitorServers();
 	});
-
+	
 	producer.join();
-	printf("Merging with GenerateRequests\n");
+	printf(YELLOW "Merging with GenerateRequests\n" RESET);
+	fprintf(logFile, "Merging with GenerateRequests\n" );
 	scalerthread.join();
-	printf("Merging with Scaler\n");
+	printf(YELLOW "Merging with Scaler\n" RESET);
+	fprintf(logFile,  "Merging with Scaler\n" );
 	loadbalancer.join();
-	printf("Merging with LoadBalancer\n");
+	printf(YELLOW "Merging with LoadBalancer\n" RESET);
+	fprintf(logFile,  "Merging with LoadBalancer\n" );
 	statthread.detach();
 	
+	fclose(logFile);
 	
 	return 0;
 }

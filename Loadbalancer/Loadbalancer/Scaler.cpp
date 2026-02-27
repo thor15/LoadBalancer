@@ -7,7 +7,7 @@ void Scaler::monitorServers()
 	{
 		if (cyclesSince < cyclesBetween)
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(40 * MILI_PER_CYCLE));
+			std::this_thread::sleep_for(std::chrono::milliseconds(60 * MILI_PER_CYCLE));
 			cyclesSince += 40;
 			continue;
 		}
@@ -16,12 +16,14 @@ void Scaler::monitorServers()
 		if (numRequsts > *numServers * 80)
 		{
 			printf(GREEN "Adding Server\n" RESET);
+			fprintf(logFile, "Adding Server\n");
 			addServer();
 			cyclesSince = 0;
 		}
 		else if (numRequsts < *numServers * 50 && *numServers > 1)
 		{
-			printf(RED "Removing Server\n" GREEN);
+			printf(RED "Removing Server\n" RESET);
+			fprintf(logFile, "Removing Server\n");
 			removeServer();
 			cyclesSince = 0;
 		}

@@ -14,8 +14,8 @@ enum RequestMode
 class GenerateRequest
 {
 public:
-	GenerateRequest(RequestMode rM, std::queue<Request>* rQ, std::shared_ptr<SyncContext> sctx, std::shared_ptr<std::atomic<bool>> rD) : requestMode(rM) {
-		requestQueue = rQ; ctx = std::move(sctx); requestDone = std::move(rD);
+	GenerateRequest(RequestMode rM, std::queue<Request>* rQ, std::shared_ptr<SyncContext> sctx, std::shared_ptr<std::atomic<bool>> rD, FILE* logs) : requestMode(rM) {
+		requestQueue = rQ; ctx = std::move(sctx); requestDone = std::move(rD); logFile = logs;
 	};
 	std::string generateIP();
 	std::string generateRequestIP(std::mt19937& rng);
@@ -32,9 +32,10 @@ private:
 	std::shared_ptr<std::atomic<bool>> requestDone;
 	int remainingInBurst = 0;
 	std::string DoSIP;
-	int remainingInDoS;
-	bool requestDoS;
-	bool destinationDoS;
+	int remainingInDoS = 0;
+	bool requestDoS = false;
+	bool destinationDoS = false;
+	FILE* logFile;
 };
 
 
