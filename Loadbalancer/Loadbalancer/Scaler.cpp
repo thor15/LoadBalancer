@@ -26,7 +26,7 @@ void Scaler::monitorServers()
 			cyclesSince = 0;
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(40  * MILI_PER_CYCLE));
+		std::this_thread::sleep_for(std::chrono::milliseconds(40 * MILI_PER_CYCLE));
 
 		if (requestDone->load() && *numServers == 1)
 		{

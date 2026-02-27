@@ -13,6 +13,7 @@
 #include <random>
 #include <string>
 #include <queue>
+#include <array>
 #include <condition_variable>
 #include "Request.h"
 #include "MutexContex.h"

@@ -7,7 +7,7 @@ int GenerateRequest::next_interarrival_ms(std::mt19937& rng)
         {
             if (remainingInBurst <= 0)
             {
-                std::uniform_int_distribution<int> burst_size_dist(300, 800);
+                std::uniform_int_distribution<int> burst_size_dist(300, 500);
                 remainingInBurst = burst_size_dist(rng);
 
                 std::uniform_int_distribution<int> pause_dist(400, 800);
@@ -27,7 +27,7 @@ int GenerateRequest::next_interarrival_ms(std::mt19937& rng)
         case RequestMode::NORMAL:
         default:
         {
-            constexpr int mean = 25;
+            constexpr int mean = 5;
             std::normal_distribution<double> d(mean, 12.0);
             int ms = static_cast<int>(d(rng));
             return std::clamp(ms, 6, 15);
@@ -125,7 +125,7 @@ void GenerateRequest::continuouslyCreateRequests(int totalTime)
         ctx->sem.release();
         int sleep_cycle = next_interarrival_ms(rng);
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_cycle *MILI_PER_CYCLE));
-        cTime += 1;
+        cTime += sleep_cycle;
     }
 
     Request newRequest = Request();

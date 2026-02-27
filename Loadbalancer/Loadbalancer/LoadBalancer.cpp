@@ -37,16 +37,24 @@ void LoadBalancer::processRequests()
 			break;
 		}
 
-		addRemove->sem.acquire();
-		addRemove->sem.release();
-		ctxServer->sem.acquire();
-		WebServer* server;
+
+		if (allowRequest(request))
 		{
-			std::unique_lock<std::shared_mutex> lock(ctxServer->rw);
-			server = serverQueue->front();
-			serverQueue->pop();
+			addRemove->sem.acquire();
+			addRemove->sem.release();
+			ctxServer->sem.acquire();
+			WebServer* server;
+			{
+				std::unique_lock<std::shared_mutex> lock(ctxServer->rw);
+				server = serverQueue->front();
+				serverQueue->pop();
+			}
+			server->processRequest(request);
 		}
-		server->processRequest(request);
+		else
+		{
+
+		}
 	}
 	
 	std::unique_lock<std::shared_mutex> lock(addRemove->rw);
@@ -66,4 +74,90 @@ void LoadBalancer::processRequests()
 		delete server;
 	}
 	printf("Done cleaning up!\n");
+}
+
+int LoadBalancer::find(const std::array<HotEntry, K>& list, const std::string& ip)
+{
+	for (int i = 0; i < K; ++i) {
+		if (list[i].inUse && list[i].ip == ip)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+void LoadBalancer::moveToFront(std::array<HotEntry, K>& list, int i)
+{
+	if (i <= 0)
+	{
+		return;
+	}
+	HotEntry tmp = std::move(list[i]);
+	for (int j = i; j > 0; --j)
+	{
+		list[j] = std::move(list[j - 1]);
+	}
+	list[0] = std::move(tmp);
+}
+
+void LoadBalancer::insertFront(std::array<HotEntry, K>& list, const std::string& ip, int initialScore)
+{
+	for (int j = K - 1; j > 0; --j)
+	{
+		list[j] = std::move(list[j - 1]);
+	}
+			
+	list[0] = HotEntry{};
+	list[0].ip = ip;
+	list[0].score = initialScore;
+	list[0].inUse = true;
+}
+
+bool LoadBalancer::allowByHotList(const std::string& ip, std::array<HotEntry, K>& list)
+{
+	for (auto& e : list) 
+	{
+		if (!e.inUse) continue;
+		e.score -= decay;
+		if (e.score < 0) e.score = 0;
+	}
+
+	int idx = find(list, ip);
+	if (idx != -1 && reqSeq <= list[idx].blockedUntilSeq) 
+	{
+		moveToFront(list, idx);
+		return false;
+	}
+
+	if (idx == -1) 
+	{
+		insertFront(list, ip, bump);
+		return true;
+	}
+
+	list[idx].score += bump;
+	moveToFront(list, idx);
+
+	if (list[0].score >= blockThreshhold) 
+	{
+		list[0].blockedUntilSeq = reqSeq + blockLength;
+		list[0].score = 0;
+		return false;
+	}
+
+	return true;
+}
+
+bool LoadBalancer::allowRequest(Request request)
+{
+	++reqSeq;
+
+	
+	if (!allowByHotList(request.requestIP, srcHot) || !allowByHotList(request.destinationIP, dstHot))
+	{
+		return false;
+	}
+
+	return true;
 }

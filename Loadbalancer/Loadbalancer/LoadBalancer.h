@@ -13,7 +13,27 @@ public:
 	void startInitial(int* numServers);
 	void processRequests();
 
+	bool allowRequest(Request request);
+
 private:
+	struct HotEntry
+	{
+		std::string ip{};
+		int score = 0;
+		uint64_t blockedUntilSeq = 0;
+		bool inUse = false;
+	};
+
+	static constexpr int K = 5;
+
+	std::array<HotEntry, K> srcHot{};
+	std::array<HotEntry, K> dstHot{};
+
+	int find(const std::array<HotEntry, K>& list, const std::string& ip);
+	void moveToFront(std::array<HotEntry, K>& list, int i);
+	void insertFront(std::array<HotEntry, K>& list, const std::string& ip, int initialScore);
+	bool allowByHotList(const std::string& ip, std::array<HotEntry, K>& list);
+
 	std::queue<Request>* requestQueue;
 	std::queue<WebServer*>* serverQueue;
 	int* serverCount;
@@ -22,6 +42,11 @@ private:
 	std::shared_ptr<SyncContext> addRemove;
 	std::shared_ptr<std::atomic<bool>> scalerDone;
 	std::condition_variable_any cv;
+	int bump = 1;
+	int decay = 1;
+	int blockThreshhold = 20;
+	int blockLength = 100;
+	uint64_t reqSeq = 0;
 };
 
 
