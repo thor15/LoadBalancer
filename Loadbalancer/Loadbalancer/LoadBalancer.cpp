@@ -4,7 +4,7 @@ void LoadBalancer::startInitial(int* numServers)
 {
 	for (int i = 0; i < *numServers; i++)
 	{
-		WebServer* server = new WebServer(serverQueue, ctxServer);
+		WebServer* server = new WebServer(serverQueue, ctxServer, activeServer, idleServer);
 		server->start();
 		serverQueue->push(server);
 	}
@@ -15,11 +15,14 @@ void LoadBalancer::startInitial(int* numServers)
 
 void LoadBalancer::processRequests()
 {
-	int timeSinceServer = 10;
-	bool drop = false;
-	bool add = false;
+	std::mt19937 rng(std::random_device{}());
 	while (true)
 	{
+		if (requestDone->load())
+		{
+			break;
+		}
+
 		ctxRequest->sem.acquire();
 
 		Request request;
@@ -41,6 +44,13 @@ void LoadBalancer::processRequests()
 
 		if (allowRequest(request))
 		{
+			std::uniform_int_distribution<int> oneInHundred(1, 300);
+			if (oneInHundred(rng) == 1)
+			{
+				printf("Recived request with requestid: %s, destinationid: %s, and duration: %d\n", request.requestIP.c_str(), request.destinationIP.c_str(), request.duration);
+				fprintf(logFile, "Recived request with requestid: %s, destinationid: %s, and duration: %d\n", request.requestIP.c_str(), request.destinationIP.c_str(), request.duration);
+			}
+
 			addRemove->sem.acquire();
 			addRemove->sem.release();
 			ctxServer->sem.acquire();
@@ -51,31 +61,17 @@ void LoadBalancer::processRequests()
 				serverQueue->pop();
 			}
 			server->processRequest(request);
+			(*acceptedRequest)++;
 		}
 		else if (firstFind)
 		{
-			printf(RED "Stopping a DoS Attack" RESET "\n");
-			fprintf(logFile, "Stopping a DoS Attack" "\n");
+			(*regectedRequest)++;
 		}
-	}
-	
-	std::unique_lock<std::shared_mutex> lock(addRemove->rw);
-	cv.wait(lock, [&] { return scalerDone->load(std::memory_order_acquire); });
-	int iter = *serverCount;
-	for (int i = 0; i < iter; i++)
-	{
-		ctxServer->sem.acquire();
-		WebServer* server;
+		else
 		{
-			std::unique_lock<std::shared_mutex> lock(ctxServer->rw);
-			server = serverQueue->front();
-			serverQueue->pop();
+			(*regectedRequest)++;
 		}
-		(*serverCount)--;
-		delete server;
 	}
-	printf(GREEN "Done cleaning up!\n" RESET);
-	fprintf(logFile, "Done cleaning up!\n");
 }
 
 int LoadBalancer::find(const std::array<HotEntry, K>& list, const std::string& ip)
@@ -151,6 +147,8 @@ bool LoadBalancer::allowByHotList(const std::string& ip, std::array<HotEntry, K>
 
 	if (list[0].score >= blockThreshhold) 
 	{
+		printf(RED "Stopping a DoS Attack with IP %s" RESET "\n", list[0].ip.c_str());
+		fprintf(logFile, "Stopping a DoS Attack with IP %s\n", list[0].ip.c_str());
 		list[0].blockedUntilSeq = reqSeq + blockLength;
 		list[0].score = 0;
 		firstFind = true;

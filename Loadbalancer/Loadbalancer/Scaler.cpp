@@ -5,6 +5,11 @@ void Scaler::monitorServers()
 	int cyclesSince = 170;
 	while (true)
 	{
+		if (requestDone->load())
+		{
+			break;
+		}
+
 		if (cyclesSince < cyclesBetween)
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(60 * MILI_PER_CYCLE));
@@ -29,11 +34,6 @@ void Scaler::monitorServers()
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(40 * MILI_PER_CYCLE));
-
-		if (requestDone->load() && *numServers == 1)
-		{
-			break;
-		}
 	}
 	{
 		std::lock_guard<std::shared_mutex> lock(addRemove->rw);
@@ -44,7 +44,7 @@ void Scaler::monitorServers()
 
 void Scaler::addServer()
 {
-	WebServer* server = new WebServer(serverQueue, ctxServer);
+	WebServer* server = new WebServer(serverQueue, ctxServer, activeServer, idleServer);
 	server->start();
 	{
 		std::unique_lock<std::shared_mutex> lock(ctxServer->rw);

@@ -6,7 +6,7 @@
 class WebServer
 {
 public:
-	WebServer(std::queue<WebServer*>* sQ, std::shared_ptr<SyncContext> sctx): sem(0) { serverQueue = sQ; ctxServer = std::move(sctx); };
+	WebServer(std::queue<WebServer*>* sQ, std::shared_ptr<SyncContext> sctx, int* acS, int* iS) : sem(0) { serverQueue = sQ; ctxServer = std::move(sctx); activeServer = acS; idleServer = iS; };
 	~WebServer();
 	void processRequest(Request request);
 	void start();
@@ -23,6 +23,8 @@ private:
 	std::counting_semaphore<10> sem{ 0 };
 	std::atomic<bool> running;
 	std::mutex rq_m;
+	int* activeServer;
+	int* idleServer;
 };
 
 #endif // !WEBSERVER_H

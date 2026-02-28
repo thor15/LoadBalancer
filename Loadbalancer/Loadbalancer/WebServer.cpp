@@ -41,6 +41,7 @@ void WebServer::run()
 
 		if (!running.load(std::memory_order_acquire))
 		{
+			(*idleServer)++;
 			break;
 		}
 
@@ -57,7 +58,11 @@ void WebServer::run()
 			serverQueue->push(this);
 		}
 		ctxServer->sem.release();
-		//printf("Readded To Queue!\n");
+		if (!running.load(std::memory_order_acquire))
+		{
+			(*activeServer)++;
+			break;
+		}
 	}
 
 	//printf("done!\n");

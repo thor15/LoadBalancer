@@ -7,8 +7,9 @@ class LoadBalancer
 {
 public:
 	LoadBalancer(std::queue<Request>* rQ, std::queue<WebServer*>* sQ, std::shared_ptr<SyncContext> sctx, std::shared_ptr<SyncContext> sctxS, std::shared_ptr<SyncContext> aR,
-		std::shared_ptr<std::atomic<bool>> sD, FILE* logs) : serverCount(0) {
-		requestQueue = rQ; serverQueue = sQ; ctxRequest = std::move(sctx);	ctxServer = std::move(sctxS); addRemove = std::move(aR); scalerDone = std::move(sD); logFile = logs;
+		std::shared_ptr<std::atomic<bool>> sD, FILE* logs, std::shared_ptr<std::atomic<bool>> rD, int* rR, int* aReq, int* aS, int* iS) : serverCount(0) {
+		requestQueue = rQ; serverQueue = sQ; ctxRequest = std::move(sctx);	ctxServer = std::move(sctxS); addRemove = std::move(aR); scalerDone = std::move(sD); logFile = logs; requestDone = std::move(rD);
+		regectedRequest = rR; acceptedRequest = aReq; activeServer = aS; idleServer = iS;
 	};
 	void startInitial(int* numServers);
 	void processRequests();
@@ -49,6 +50,11 @@ private:
 	uint64_t reqSeq = 0;
 	bool firstFind = false;
 	FILE* logFile;
+	std::shared_ptr<std::atomic<bool>> requestDone;
+	int* regectedRequest;
+	int* acceptedRequest;
+	int* activeServer;
+	int* idleServer;
 };
 
 
