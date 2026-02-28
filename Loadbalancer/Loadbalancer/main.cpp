@@ -10,9 +10,15 @@ int main(int args, char** argv)
 	int numServers = atoi(argv[1]);
 	int duration = atoi(argv[2]);
 	int mode = atoi(argv[3]);
-	FILE* logFile;
-	errno_t err = fopen_s(&logFile, "../log.txt", "w");
-	if (err != 0)
+	FILE* logFile = nullptr;
+
+	#ifdef _MSC_VER
+		errno_t err = fopen_s(&logFile, "../log.txt", "w");
+		if (err != 0 || !logFile)
+	#else
+		logFile = fopen("../log.txt", "w");
+		if (!logFile)
+	#endif
 	{
 		printf("Failed to open log\n");
 		return 1;
